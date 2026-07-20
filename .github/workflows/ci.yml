@@ -13,5 +13,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Display Message
-        run: echo "Hello Sharan! GitHub Action is running successfully."
+      - name: Display GitHub Information
+  run: |
+    echo "Repository : ${{ github.repository }}"
+    echo "Branch     : ${{ github.ref_name }}"
+    echo "Actor      : ${{ github.actor }}"
+    echo "Commit SHA : ${{ github.sha }}"
+    echo "Event      : ${{ github.event_name }}"
