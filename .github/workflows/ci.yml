@@ -13,10 +13,18 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Display GitHub Information
-  run: |
-    echo "Repository : ${{ github.repository }}"
-    echo "Branch     : ${{ github.ref_name }}"
-    echo "Actor      : ${{ github.actor }}"
-    echo "Commit SHA : ${{ github.sha }}"
+      - name: Display Repository
+        run: echo "Repository: ${{ github.repository }}"
+
+      - name: Display Branch
+        run: echo "Branch: ${{ github.ref_name }}"
+
+      - name: Display Actor
+        run: echo "Actor: ${{ github.actor }}"
+
+      - name: Display Commit
+        run: echo "Commit SHA: ${{ github.sha }}"
+
+      - name: Display Event
+        run: echo "Event: ${{ github.event_name }}"
     echo "Event      : ${{ github.event_name }}"
