@@ -27,4 +27,4 @@ jobs:
 
       - name: Display Event
         run: echo "Event: ${{ github.event_name }}"
-    echo "Event      : ${{ github.event_name }}"
+    
