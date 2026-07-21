@@ -1,5 +1,6 @@
 import pytest
-from app.main import add, subtract, multiply, divide
+import logging
+from app.main import add, subtract, multiply, divide, setup_logging
 
 
 def test_add():
@@ -26,3 +27,9 @@ def test_divide():
 def test_divide_by_zero():
     with pytest.raises(ValueError, match="Cannot divide by zero."):
         divide(5, 0)
+
+
+def test_logging_setup():
+    setup_logging(debug_mode=True)
+    logger = logging.getLogger("DevOpsApp")
+    assert logger.level == logging.DEBUG

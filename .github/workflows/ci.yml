@@ -11,7 +11,7 @@ on:
 
 jobs:
   lint-and-test:
-    name: Build, Lint & Test (Python ${{ matrix.python-version }})
+    name: Build, Lint & Debug (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -32,25 +32,78 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      - name: Debugging & System Diagnostics
+        run: |
+          echo "=== DEBUG & DIAGNOSTICS INFO ==="
+          echo "OS: $(uname -a)"
+          echo "Python version: $(python --version)"
+          echo "Git Actor: ${{ github.actor }}"
+          echo "Git Branch: ${{ github.ref_name }}"
+          echo "Git Commit SHA: ${{ github.sha }}"
+          echo "Trigger Event: ${{ github.event_name }}"
+          echo "================================"
+
       - name: Run Flake8 Code Linting
         run: |
           python -m flake8 app tests
 
       - name: Run Pytest Unit Tests
         run: |
-          python -m pytest
+          python -m pytest -v
 
-      - name: Run Application Execution Check
+      - name: Run Application in Standard Mode
         run: |
           python app/main.py
+
+      - name: Run Application in Debug Mode
+        run: |
+          python app/main.py --debug
 
       - name: Generate Workflow Summary
         if: always()
         run: |
-          echo "### 🚀 DevOps Automation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 DevOps Automation Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "- **Python Version**: \`${{ matrix.python-version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Repository**: \`$GITHUB_REPOSITORY\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch**: \`$GITHUB_REF_NAME\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: \`$GITHUB_SHA\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Trigger Event**: \`$GITHUB_EVENT_NAME\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status**: ✅ Automation tests completed!" >> $GITHUB_STEP_SUMMARY
+          echo "- **Debug Status**: 🐞 Debugging verified!" >> $GITHUB_STEP_SUMMARY
+
+  notify-team:
+    name: Team Push Alert Notification
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    if: always() && github.event_name == 'push'
+    steps:
+      - name: Send Code Push Alert to Team
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL || secrets.DISCORD_WEBHOOK_URL || secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          echo "=================================================="
+          echo "📢 TEAM ALERT: New Code Pushed to Repository!"
+          echo "👤 Pushed By: ${{ github.actor }}"
+          echo "📌 Branch: ${{ github.ref_name }}"
+          echo "📝 Commit SHA: ${{ github.sha }}"
+          echo "💬 Commit Message: ${{ github.event.head_commit.message }}"
+          echo "⏱️ Timestamp: ${{ github.event.head_commit.timestamp }}"
+          echo "=================================================="
+
+          echo "## 📢 Team Notification: Code Push Alert" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Details |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+          echo "| 👤 **Pushed By** | \`${{ github.actor }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📌 **Branch** | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📝 **Commit SHA** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 💬 **Commit Message** | \`${{ github.event.head_commit.message }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| ⏱️ **Timestamp** | \`${{ github.event.head_commit.timestamp }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📊 **CI Pipeline Status** | ✅ Passed Successfully |" >> $GITHUB_STEP_SUMMARY
+
+          if [ -n "$WEBHOOK_URL" ]; then
+            echo "Sending team alert via Webhook..."
+            curl -X POST -H "Content-Type: application/json" \
+              -d "{\"text\": \"🚨 *Team Push Alert*: *${{ github.actor }}* pushed code to branch *${{ github.ref_name }}*!\n*Commit*: ${{ github.sha }}\n*Message*: ${{ github.event.head_commit.message }}\", \"content\": \"🚨 **Team Push Alert**: **${{ github.actor }}** pushed code to branch **${{ github.ref_name }}**!\n**Commit**: ${{ github.sha }}\n**Message**: ${{ github.event.head_commit.message }}\"}" \
+              "$WEBHOOK_URL" || echo "Webhook dispatch warning."
+          else
+            echo "ℹ️ Webhook secret not set yet. Alert logged to GitHub Step Summary."
+          fi
