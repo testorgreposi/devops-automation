@@ -29,6 +29,9 @@ jobs:
       - name: Run Tests
         run: python -m pytest
 
+      - name: Run Flake8
+        run: python -m flake8 app tests
+
       - name: Display GitHub Information
         run: |
           echo "Repository: $GITHUB_REPOSITORY"
