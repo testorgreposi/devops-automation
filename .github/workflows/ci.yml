@@ -23,6 +23,8 @@ jobs:
    
       - name: Run Python Program
         run: python app/main.py
+      - name: Run Tests
+        run: python -m pytest
 
       - name: Display GitHub Information
         run: |
